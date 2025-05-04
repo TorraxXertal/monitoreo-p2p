@@ -1,69 +1,27 @@
 import time
-import requests
 import traceback
+import requests
+from bs4 import BeautifulSoup
 
 BOT_TOKEN = '7691092018:AAFNhWE2NDBDdtnwa6iZjv4I_stvV63EyRE'
 USER_ID = 7239555470  # sin comillas
-
-API_URL = "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search"
+URL = "https://p2p.binance.com/en/trade/sell/USDT?fiat=BOB"
 last_price = 15.13
 
-def get_visible_price():
-    payload = {
-        "page": 1,
-        "rows": 30,
-        "asset": "USDT",
-        "tradeType": "SELL",
-        "fiat": "BOB",
-        "transAmount": "8000",
-        "payTypes": []  # Puedes agregar "BankTransfer" si quieres limitar
-    }
+HEADERS = {
+    "User-Agent": "Mozilla/5.0"
+}
 
-    headers = {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0"
-    }
-
+def get_first_price():
     try:
-        response = requests.post(API_URL, json=payload, headers=headers)
-        data = response.json()
-
-        if "data" in data and len(data["data"]) > 0:
-            valid_prices = []
-            for item in data["data"]:
-                try:
-                    adv = item["adv"]
-                    advertiser = item["advertiser"]
-
-                    min_amount = float(adv["minSingleTransAmount"])
-                    max_amount = float(adv["maxSingleTransAmount"])
-                    price = float(adv["price"])
-
-                    # Filtrar por rango válido de monto
-                    if not (min_amount <= 8000 <= max_amount):
-                        continue
-
-                    # Filtrar por usuarios verificados
-                    if advertiser.get("userType") == "ordinary":
-                        continue
-
-                    # Opcional: reputación mínima
-                    if advertiser.get("monthOrderCount", 0) < 100:
-                        continue
-
-                    valid_prices.append(price)
-
-                except Exception:
-                    continue
-
-            if valid_prices:
-                return min(valid_prices)
-            else:
-                print("No hay anuncios válidos según filtros.")
-                return None
-        else:
-            print("Respuesta vacía.")
+        response = requests.get(URL, headers=HEADERS)
+        soup = BeautifulSoup(response.text, "html.parser")
+        price_element = soup.select_one("div.headline5.text-primaryText")
+        if not price_element:
+            print("No se encontró el precio.")
             return None
+        price = float(price_element.text.strip().replace(",", ""))
+        return price
     except Exception:
         traceback.print_exc()
         return None
@@ -80,9 +38,9 @@ def send_telegram_message(message):
 
 if __name__ == "__main__":
     while True:
-        price = get_visible_price()
+        price = get_first_price()
         if price:
-            print(f"Precio visible filtrado: Bs. {price}")
+            print(f"Precio actual: Bs. {price}")
             diff = price - last_price
             if diff >= 0.03:
                 last_price = price
@@ -93,5 +51,5 @@ if __name__ == "__main__":
                 mensaje = f"BAJÓ Bs. {abs(diff):.2f} - Nuevo precio: Bs. {price:.2f}"
                 send_telegram_message(mensaje)
         else:
-            print("No se pudo obtener precio visible.")
-        time.sleep(150)
+            print("No se pudo obtener el precio.")
+        time.sleep(10)
