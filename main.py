@@ -2,8 +2,8 @@ import requests
 import traceback
 import os
 
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-USER_ID = os.environ.get("USER_ID")
+BOT_TOKEN = '7691092018:AAFNhWE2NDBDdtnwa6iZjv4I_stvV63EyRE'
+USER_ID = 7239555470  # sin comillas
 API_URL = "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search"
 LAST_PRICE_FILE = "last_price.txt"
 
