@@ -2,9 +2,9 @@ import time
 import requests
 import traceback
 
-BOT_TOKEN = '7691092018:AAFNhWE2NDBDdtnwa6iZjv4I_stvV63EyRE'
-USER_ID = 7239555470  # sin comillas
-API_URL = "https://p2p.binance.com/es-AR/trade/sell/USDT?fiat=BOB&payment=all-payments"
+BOT_TOKEN = 'TU_BOT_TOKEN'
+USER_ID = 'TU_USER_ID'
+API_URL = "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search"
 last_price = 15.13
 
 def get_first_price():
