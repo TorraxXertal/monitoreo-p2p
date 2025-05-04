@@ -2,8 +2,8 @@ import time
 import requests
 import traceback
 
-BOT_TOKEN = 'TU_BOT_TOKEN'
-USER_ID = 'TU_USER_ID'
+BOT_TOKEN = '7691092018:AAFNhWE2NDBDdtnwa6iZjv4I_stvV63EyRE'
+USER_ID = 7239555470  # sin comillas
 API_URL = "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search"
 last_price = 15.13
 
@@ -11,19 +11,34 @@ def get_first_price():
     payload = {
         "page": 1,
         "rows": 1,
-        "payTypes": [],
+        "payTypes": [],  # Puedes agregar "BankTransfer" si deseas filtrar
         "asset": "USDT",
         "tradeType": "SELL",
         "fiat": "BOB"
     }
 
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0"
+    }
+
     try:
-        headers = {"Content-Type": "application/json"}
+        print("Enviando payload:", payload)
         response = requests.post(API_URL, json=payload, headers=headers)
+        print("Código de estado:", response.status_code)
+        print("Respuesta de Binance:", response.text)
+
         data = response.json()
-        price_str = data["data"][0]["adv"]["price"]
-        return float(price_str)
-    except Exception:
+
+        # Validamos que la respuesta tenga el formato esperado
+        if "data" in data and len(data["data"]) > 0:
+            price_str = data["data"][0]["adv"]["price"]
+            return float(price_str)
+        else:
+            print("Formato inesperado de respuesta:", data)
+            return None
+    except Exception as e:
+        print("Ocurrió un error al obtener el precio:")
         traceback.print_exc()
         return None
 
