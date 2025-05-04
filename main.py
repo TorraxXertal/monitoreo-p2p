@@ -7,14 +7,15 @@ USER_ID = 7239555470  # sin comillas
 API_URL = "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search"
 last_price = 15.13
 
-def get_first_price():
+def get_lowest_price():
     payload = {
         "page": 1,
-        "rows": 1,
-        "payTypes": [],  # Puedes agregar "BankTransfer" si deseas filtrar
+        "rows": 20,
         "asset": "USDT",
         "tradeType": "SELL",
-        "fiat": "BOB"
+        "fiat": "BOB",
+        "transAmount": "8000",  # Filtra anuncios que aceptan desde 8000 BOB
+        "payTypes": []  # Ejemplo: ["BankTransfer"] si lo necesitas
     }
 
     headers = {
@@ -23,22 +24,28 @@ def get_first_price():
     }
 
     try:
-        print("Enviando payload:", payload)
         response = requests.post(API_URL, json=payload, headers=headers)
-        print("Código de estado:", response.status_code)
-        print("Respuesta de Binance:", response.text)
-
         data = response.json()
 
-        # Validamos que la respuesta tenga el formato esperado
         if "data" in data and len(data["data"]) > 0:
-            price_str = data["data"][0]["adv"]["price"]
-            return float(price_str)
+            prices = []
+            for item in data["data"]:
+                try:
+                    price = float(item["adv"]["price"])
+                    prices.append(price)
+                except:
+                    continue
+
+            if prices:
+                lowest_price = min(prices)
+                return lowest_price
+            else:
+                print("No se pudo extraer ningún precio.")
+                return None
         else:
-            print("Formato inesperado de respuesta:", data)
+            print("Respuesta vacía o formato inesperado:", data)
             return None
-    except Exception as e:
-        print("Ocurrió un error al obtener el precio:")
+    except Exception:
         traceback.print_exc()
         return None
 
@@ -54,9 +61,9 @@ def send_telegram_message(message):
 
 if __name__ == "__main__":
     while True:
-        price = get_first_price()
+        price = get_lowest_price()
         if price:
-            print(f"Precio actual: Bs. {price}")
+            print(f"Precio más bajo: Bs. {price}")
             diff = price - last_price
             if diff >= 0.03:
                 last_price = price
