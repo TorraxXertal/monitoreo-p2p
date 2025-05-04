@@ -1,11 +1,22 @@
-import time
 import requests
 import traceback
+import os
 
-BOT_TOKEN = '7691092018:AAFNhWE2NDBDdtnwa6iZjv4I_stvV63EyRE'
-USER_ID = 7239555470  # sin comillas
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+USER_ID = os.environ.get("USER_ID")
 API_URL = "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search"
-last_price = 15.13
+LAST_PRICE_FILE = "last_price.txt"
+
+def load_last_price():
+    try:
+        with open(LAST_PRICE_FILE, "r") as f:
+            return float(f.read().strip())
+    except:
+        return 15.13  # Precio inicial por defecto
+
+def save_last_price(price):
+    with open(LAST_PRICE_FILE, "w") as f:
+        f.write(str(price))
 
 def get_first_price():
     payload = {
@@ -38,19 +49,20 @@ def send_telegram_message(message):
         traceback.print_exc()
 
 if __name__ == "__main__":
-    while True:
-        price = get_first_price()
-        if price:
-            print(f"Precio actual: Bs. {price}")
-            diff = price - last_price
-            if diff >= 0.03:
-                last_price = price
-                mensaje = f"SUBIÓ Bs. {diff:.2f} - Nuevo precio: Bs. {price:.2f}"
-                send_telegram_message(mensaje)
-            elif diff <= -0.02:
-                last_price = price
-                mensaje = f"BAJÓ Bs. {abs(diff):.2f} - Nuevo precio: Bs. {price:.2f}"
-                send_telegram_message(mensaje)
+    price = get_first_price()
+    if price:
+        print(f"Precio actual: Bs. {price}")
+        last_price = load_last_price()
+        diff = price - last_price
+        if diff >= 0.03:
+            mensaje = f"📈 SUBIÓ Bs. {diff:.2f} - Nuevo precio: Bs. {price:.2f}"
+            send_telegram_message(mensaje)
+            save_last_price(price)
+        elif diff <= -0.02:
+            mensaje = f"📉 BAJÓ Bs. {abs(diff):.2f} - Nuevo precio: Bs. {price:.2f}"
+            send_telegram_message(mensaje)
+            save_last_price(price)
         else:
-            print("No se pudo obtener el precio.")
-        time.sleep(600)
+            print("No hay cambios relevantes.")
+    else:
+        print("No se pudo obtener el precio.")
