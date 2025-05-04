@@ -1,27 +1,28 @@
 import time
-import traceback
 import requests
-from bs4 import BeautifulSoup
+import traceback
 
 BOT_TOKEN = '7691092018:AAFNhWE2NDBDdtnwa6iZjv4I_stvV63EyRE'
 USER_ID = 7239555470  # sin comillas
-URL = "https://p2p.binance.com/en/trade/sell/USDT?fiat=BOB"
+API_URL = "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search"
 last_price = 15.13
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0"
-}
-
 def get_first_price():
+    payload = {
+        "page": 1,
+        "rows": 1,
+        "payTypes": [],
+        "asset": "USDT",
+        "tradeType": "SELL",
+        "fiat": "BOB"
+    }
+
     try:
-        response = requests.get(URL, headers=HEADERS)
-        soup = BeautifulSoup(response.text, "html.parser")
-        price_element = soup.select_one("div.headline5.text-primaryText")
-        if not price_element:
-            print("No se encontró el precio.")
-            return None
-        price = float(price_element.text.strip().replace(",", ""))
-        return price
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(API_URL, json=payload, headers=headers)
+        data = response.json()
+        price_str = data["data"][0]["adv"]["price"]
+        return float(price_str)
     except Exception:
         traceback.print_exc()
         return None
